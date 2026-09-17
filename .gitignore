@@ -1,0 +1,6 @@
+/issues
+/dist/
+*.db
+*.db-shm
+*.db-wal
+.tmp/
