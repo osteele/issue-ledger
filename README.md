@@ -16,31 +16,42 @@ from a clone rather than by module path:
 ```bash
 git clone https://github.com/osteele/agent-issues
 cd agent-issues
-just install          # go install ./cmd/issues
+go install ./cmd/issues
+issues --help            # verify
 ```
 
-That puts `issues` in `$(go env GOBIN)` — usually `~/go/bin`, which must be on
-your PATH. `just build` instead produces `./issues` in the working directory.
+That installs a binary named `issues` into `$GOBIN`, or `$GOPATH/bin` when
+`GOBIN` is unset — `~/go/bin` on a default setup. That directory must be on
+your PATH.
+
+If you have [`just`](https://github.com/casey/just), `just install` runs the
+same command, and `just build` produces `./issues` in the working directory
+instead. It is a convenience, not a requirement.
 
 ## Use
 
+Register each tool you want to file issues against once. `--path` is your own
+local checkout of that tool, and is what lets `--component .` later resolve the
+directory you are standing in:
+
 ```bash
-issues component add weft --prefix wb --path ~/code/research-tools/weft
-issues report --component weft \
+issues component add myproject --prefix mp --path ~/src/myproject
+
+issues report --component myproject \
   --title "runner pending job is missing queue payload" \
   --kind invariant --severity error \
   --fingerprint "queue.missing_payload:studio" \
-  --ref "wj2454 on studio" \
+  --ref "build 2454 on the CI host" \
   --summary "Queue state is inconsistent; not a job-code or input problem." \
   --detail "Raw evidence, paths, command output, invariant details."
-# Filed wb147 (weft): runner pending job is missing queue payload
+# Filed mp1 (myproject): runner pending job is missing queue payload
 
-issues note wb147 "Seen again after a runner restart; terminal artifacts existed."
+issues note mp1 "Seen again after a runner restart; terminal artifacts existed."
 issues list                      # open, plus closed issues still actively recurring
                                  # (2+ recurrences, most recent within 7 days)
 issues list --component .        # just the component you are standing in
-issues show wb147
-issues close wb147 --reason "fixed in jj rev <change-id> (<git-commit>)"
+issues show mp1
+issues close mp1 --reason "fixed in <commit>"
 ```
 
 ## Why a ledger rather than mail or a per-repo tracker
@@ -60,11 +71,16 @@ The ledger is local and is never synchronized. Issue text routinely carries job
 identifiers, unpublished research description, and absolute local paths, so
 publishing is an explicit per-issue decision:
 
+Publishing needs a target repository, taken from the component unless you pass
+`--repo`:
+
 ```bash
-issues publish wb147                    # prints exactly what would be sent, sends nothing
-issues publish wb147 --yes              # summary, kind, severity, likelihood,
-                                        # occurrence count, and scope if set
-issues publish wb147 --include-detail --include-ref --include-notes --yes
+issues component set myproject --repo owner/myproject
+
+issues publish mp1                    # prints exactly what would be sent, sends nothing
+issues publish mp1 --yes              # summary, kind, severity, likelihood,
+                                      # occurrence count, and scope if set
+issues publish mp1 --include-detail --include-ref --include-notes --yes
 ```
 
 `detail`, `ref` and notes are the fields that hold local specifics, and each is
@@ -82,10 +98,13 @@ you — review the printed body before `--yes`.
 
 `$AGENT_ISSUES_REPORTER` stamps a session name on everything it files.
 
-## weft
+## Migrating from weft (skip unless you used it)
 
-weft's bug tracker was the origin of this design, and weft's history lives here
-now — all 146 issues, with their numbers preserved, so `wb64` still resolves and
+weft is a research job runner, and its built-in bug tracker was the origin of
+this design. This section is migration material for an existing weft user;
+nothing here is needed to adopt agent-issues.
+
+weft's history lives here now — all 146 issues, with their numbers preserved, so `wb64` still resolves and
 every citation in a lab notebook still points at the same issue.
 
 `weft bug ...` forwards here (weft config `bug.tracker = "issues"`, the default).
@@ -95,3 +114,14 @@ Those commands keep working; new work should use `issues` directly.
 issues import-weft              # idempotent; adds what is new
 issues import-weft --reconcile  # also refresh already-imported issues from the source
 ```
+
+## Status and further reference
+
+In daily use, and the sole tracker for its first component since the weft
+cutover in September 2026 (146 issues migrated). The store format is settled;
+the CLI may still gain flags.
+
+Every command self-documents — start with `issues report --help` for the
+fingerprint and severity options, and `issues publish --help` for exactly what
+an export sends. Decisions and their rejected alternatives are in
+`docs/decisions/log.md`.
