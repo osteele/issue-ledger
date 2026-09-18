@@ -8,6 +8,22 @@ project from the one at fault. Repeat sightings of the same fingerprint collapse
 onto one issue and raise its occurrence count; a sighting after a close records a
 recurrence rather than silently reopening.
 
+## Install
+
+Requires Go 1.27.1 or newer (`go.mod`). The repository is private, so install
+from a clone rather than by module path:
+
+```bash
+git clone https://github.com/osteele/agent-issues
+cd agent-issues
+just install          # go install ./cmd/issues
+```
+
+That puts `issues` in `$(go env GOBIN)` — usually `~/go/bin`, which must be on
+your PATH. `just build` instead produces `./issues` in the working directory.
+
+## Use
+
 ```bash
 issues component add weft --prefix wb --path ~/code/research-tools/weft
 issues report --component weft \
@@ -20,7 +36,8 @@ issues report --component weft \
 # Filed wb147 (weft): runner pending job is missing queue payload
 
 issues note wb147 "Seen again after a runner restart; terminal artifacts existed."
-issues list                      # open, plus closed issues still recurring
+issues list                      # open, plus closed issues still actively recurring
+                                 # (2+ recurrences, most recent within 7 days)
 issues list --component .        # just the component you are standing in
 issues show wb147
 issues close wb147 --reason "fixed in jj rev <change-id> (<git-commit>)"
@@ -45,12 +62,15 @@ publishing is an explicit per-issue decision:
 
 ```bash
 issues publish wb147                    # prints exactly what would be sent, sends nothing
-issues publish wb147 --yes              # title, kind, severity, likelihood, summary only
+issues publish wb147 --yes              # summary, kind, severity, likelihood,
+                                        # occurrence count, and scope if set
 issues publish wb147 --include-detail --include-ref --include-notes --yes
 ```
 
 `detail`, `ref` and notes are the fields that hold local specifics, and each is
-opt-in. Nothing is redacted for you — review the printed body before `--yes`.
+opt-in. `scope` is published by default and is free-form, so keep it a
+classification label rather than a place for detail. Nothing is redacted for
+you — review the printed body before `--yes`.
 
 ## Layout
 

@@ -50,9 +50,11 @@ research description, and absolute local paths. So publishing is deliberate and
 minimal rather than a sync:
 
   - It prints the exact body and exits. Nothing is sent without --yes.
-  - The body carries the title, kind, severity, likelihood and summary only.
-    Detail, ref, reporter and notes are the fields that hold local specifics,
-    and each is opt-in: --include-detail, --include-ref, --include-notes.
+  - The body carries the title, summary, kind, severity, likelihood, the
+    occurrence count, and scope when set. Detail, ref, reporter and notes are
+    the fields that hold local specifics, and each is opt-in:
+    --include-detail, --include-ref, --include-notes. Scope is free-form and
+    is published by default, so keep it a classification label.
   - Review the printed body before passing --yes. The fields you opt into are
     published verbatim; nothing is redacted for you.`,
 	Args: cobra.ExactArgs(1),
