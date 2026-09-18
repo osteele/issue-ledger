@@ -4,3 +4,6 @@
 *.db-shm
 *.db-wal
 .tmp/
+
+# Staging area for agent-review evidence packets (transient).
+.review-evidence/
